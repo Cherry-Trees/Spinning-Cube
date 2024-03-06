@@ -3,7 +3,7 @@
 #include "Vec3.h"
 #include "Mat44.h"
 
-Vec3 vec3_x_mat44(Vec3 &v, Mat44 &m) 
+struct Vec3 vec3_x_mat44(struct Vec3 v, struct Mat44 m) 
 {
     struct Vec3 out;
     out.x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + m.m[3][0];
@@ -21,7 +21,7 @@ Vec3 vec3_x_mat44(Vec3 &v, Mat44 &m)
     return out;
 }
 
-Vec3 rotateX(Vec3 &v, float delta)
+struct Vec3 rotateX(struct Vec3 v, float delta)
 {
     struct Mat44 Rx;
     Rx.m[0][0] = 1.f;             Rx.m[0][1] = 0.f;             Rx.m[0][2] = 0.f;             Rx.m[0][3] = 0.f;
@@ -32,7 +32,7 @@ Vec3 rotateX(Vec3 &v, float delta)
     return vec3_x_mat44(v, Rx);
 }
 
-Vec3 rotateY(Vec3 &v, float delta)
+struct Vec3 rotateY(struct Vec3 v, float delta)
 {
     struct Mat44 Ry;
     Ry.m[0][0] = cosf(delta);     Ry.m[0][1] = 0.f;             Ry.m[0][2] = -sinf(delta);    Ry.m[0][3] = 0.f;
@@ -43,7 +43,7 @@ Vec3 rotateY(Vec3 &v, float delta)
     return vec3_x_mat44(v, Ry);
 }
 
-Vec3 rotateZ(Vec3 &v, float delta)
+struct Vec3 rotateZ(struct Vec3 v, float delta)
 {
     struct Mat44 Rz;
     Rz.m[0][0] = cosf(delta);     Rz.m[0][1] = -sinf(delta);    Rz.m[0][2] = 0.f;             Rz.m[0][3] = 0.f;
@@ -53,3 +53,18 @@ Vec3 rotateZ(Vec3 &v, float delta)
     
     return vec3_x_mat44(v, Rz);
 }
+
+// f(x)
+float f(const int x, const struct Vec3 v1, const struct Vec3 v2) {
+    const float m = (float)(v2.y - v1.y) / (float)(v2.x - v1.x);
+    return (m * (x - v1.x)) + v1.y;
+}
+
+// g(y)
+float g(const int y, const struct Vec3 v1, const struct Vec3 v2) {
+    const float m = (float)(v2.y - v1.y) / (float)(v2.x - v1.x);
+    return ((float)(y - v1.y) / m) + v1.x;
+}
+
+float max(const float a, const float b) {if (a > b) {return a;} else {return b;}}
+float min(const float a, const float b) {if (a < b) {return a;} else {return b;}}

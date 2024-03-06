@@ -68,3 +68,21 @@ float g(const int y, const struct Vec3 v1, const struct Vec3 v2) {
 
 float max(const float a, const float b) {if (a > b) {return a;} else {return b;}}
 float min(const float a, const float b) {if (a < b) {return a;} else {return b;}}
+
+float norm(const struct Vec3 v) {return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);}
+struct Vec3 unit(struct Vec3 v) {
+    const float norm_v = norm(v);
+    v.x /= norm_v;
+    v.y /= norm_v;
+    v.z /= norm_v;
+    return v;
+}
+
+float dot(const struct Vec3 v1, const struct Vec3 v2) {return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;}
+struct Vec3 cross(const struct Vec3 v1, const struct Vec3 v2) {
+    struct Vec3 cross_v1v2 = {
+        v1.y * v2.z - v1.z * v2.y,
+        v1.z * v2.x - v1.x * v2.z,
+        v1.x * v2.y - v1.y * v2.x
+    }; return cross_v1v2;
+}

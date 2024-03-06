@@ -5,8 +5,6 @@
 #include "Mat44.h"
 #include "Vec3.h"
 
-char screen[H * W];
-
 int main() {
 
     struct Mat44 PROJECTION_MATRIX;
@@ -31,166 +29,171 @@ int main() {
     PROJECTION_MATRIX.m[3][2] = (-Z_FAR * Z_NEAR) / (Z_FAR - Z_NEAR);            
     PROJECTION_MATRIX.m[3][3] = 0.f;  
 
+    char screen[H * W];
+    char PROJECTED_CHAR[6] = {' ', '.', '~', '+', '$', '#'};
+
     printf("\x1b[H");
     printf("\x1b[2J");
-    for (int n = 0; n < 150; n++)
+    for (int n = 0; n < 125; n++)
     {
-        // Bottom
-        struct Vec3 v1 = {-0.5f, -0.5f, -0.5f};
-        struct Vec3 v2 = {0.5f, -0.5f, -0.5f};
-        struct Vec3 v3 = {0.5f, -0.5f, 0.5f};
-        struct Vec3 v4 = {-0.5f, -0.5f, 0.5f};
 
-        // Top
-        struct Vec3 v5 = {-0.5f, 0.5f, -0.5f};
-        struct Vec3 v6 = {0.5f, 0.5f, -0.5f};
-        struct Vec3 v7 = {-0.5f, 0.5f, 0.5f};
-        struct Vec3 v8 = {0.5f, 0.5f, 0.5f};
+        // 12 triangles, 3 vectors each
+        struct Vec3 triCollection[12][3];
 
-        float t = n * 0.15f;
-        v1 = rotateX(v1, t);
-        v2 = rotateX(v2, t);
-        v3 = rotateX(v3, t);
-        v4 = rotateX(v4, t);
-        v5 = rotateX(v5, t);
-        v6 = rotateX(v6, t);
-        v7 = rotateX(v7, t);
-        v8 = rotateX(v8, t);
+        // SOUTH
+        triCollection[0][0].x = -0.5f;  triCollection[0][0].y = -0.5f;  triCollection[0][0].z = -0.5f;
+        triCollection[0][1].x = -0.5f;  triCollection[0][1].y = 0.5f;   triCollection[0][1].z = -0.5f;
+        triCollection[0][2].x = 0.5f;   triCollection[0][2].y = 0.5f;   triCollection[0][2].z = -0.5f;
 
-        v1 = rotateY(v1, t / 2.5f);
-        v2 = rotateY(v2, t / 2.5f);
-        v3 = rotateY(v3, t / 2.5f);
-        v4 = rotateY(v4, t / 2.5f);
-        v5 = rotateY(v5, t / 2.5f);
-        v6 = rotateY(v6, t / 2.5f);
-        v7 = rotateY(v7, t / 2.5f);
-        v8 = rotateY(v8, t / 2.5f);
+        triCollection[1][0].x = -0.5f;  triCollection[1][0].y = -0.5f;  triCollection[1][0].z = -0.5f;
+        triCollection[1][1].x = 0.5f;   triCollection[1][1].y = 0.5f;   triCollection[1][1].z = -0.5f;
+        triCollection[1][2].x = 0.5f;   triCollection[1][2].y = -0.5f;  triCollection[1][2].z = -0.5f;
 
-        v1 = rotateZ(v1, t / 2.f);
-        v2 = rotateZ(v2, t / 2.f);
-        v3 = rotateZ(v3, t / 2.f);
-        v4 = rotateZ(v4, t / 2.f);
-        v5 = rotateZ(v5, t / 2.f);
-        v6 = rotateZ(v6, t / 2.f);
-        v7 = rotateZ(v7, t / 2.f);
-        v8 = rotateZ(v8, t / 2.f);
-
-        v1.z += DISTANCE_FROM_CAMERA;
-        v2.z += DISTANCE_FROM_CAMERA;
-        v3.z += DISTANCE_FROM_CAMERA;
-        v4.z += DISTANCE_FROM_CAMERA;
-        v5.z += DISTANCE_FROM_CAMERA;
-        v6.z += DISTANCE_FROM_CAMERA;
-        v7.z += DISTANCE_FROM_CAMERA;
-        v8.z += DISTANCE_FROM_CAMERA;
-
-        struct Vec3 v1Proj = vec3_x_mat44(v1, PROJECTION_MATRIX);
-        struct Vec3 v2Proj = vec3_x_mat44(v2, PROJECTION_MATRIX);
-        struct Vec3 v3Proj = vec3_x_mat44(v3, PROJECTION_MATRIX);
-        struct Vec3 v4Proj = vec3_x_mat44(v4, PROJECTION_MATRIX);
-        struct Vec3 v5Proj = vec3_x_mat44(v5, PROJECTION_MATRIX);
-        struct Vec3 v6Proj = vec3_x_mat44(v6, PROJECTION_MATRIX);
-        struct Vec3 v7Proj = vec3_x_mat44(v7, PROJECTION_MATRIX);
-        struct Vec3 v8Proj = vec3_x_mat44(v8, PROJECTION_MATRIX);
-
-        v1Proj.x += INIT_TRANSLATION;
-        v1Proj.y += INIT_TRANSLATION;
-        v2Proj.x += INIT_TRANSLATION;
-        v2Proj.y += INIT_TRANSLATION;
-        v3Proj.x += INIT_TRANSLATION;
-        v3Proj.y += INIT_TRANSLATION;
-        v4Proj.x += INIT_TRANSLATION;
-        v4Proj.y += INIT_TRANSLATION;
-        v5Proj.x += INIT_TRANSLATION;
-        v5Proj.y += INIT_TRANSLATION;
-        v6Proj.x += INIT_TRANSLATION;
-        v6Proj.y += INIT_TRANSLATION;
-        v7Proj.x += INIT_TRANSLATION;
-        v7Proj.y += INIT_TRANSLATION;
-        v8Proj.x += INIT_TRANSLATION;
-        v8Proj.y += INIT_TRANSLATION;
-
-        v1Proj.x *= 0.5f * W;
-        v1Proj.y *= 0.5f * H;
-        v2Proj.x *= 0.5f * W;
-        v2Proj.y *= 0.5f * H;
-        v3Proj.x *= 0.5f * W;
-        v3Proj.y *= 0.5f * H;
-        v4Proj.x *= 0.5f * W;
-        v4Proj.y *= 0.5f * H;
-        v5Proj.x *= 0.5f * W;
-        v5Proj.y *= 0.5f * H;
-        v6Proj.x *= 0.5f * W;
-        v6Proj.y *= 0.5f * H;
-        v7Proj.x *= 0.5f * W;
-        v7Proj.y *= 0.5f * H;
-        v8Proj.x *= 0.5f * W;
-        v8Proj.y *= 0.5f * H;
+        // EAST
+        triCollection[2][0].x = 0.5f;   triCollection[2][0].y = -0.5f;  triCollection[2][0].z = -0.5f;
+        triCollection[2][1].x = 0.5f;   triCollection[2][1].y = 0.5f;   triCollection[2][1].z = -0.5f;
+        triCollection[2][2].x = 0.5f;   triCollection[2][2].y = 0.5f;   triCollection[2][2].z = 0.5f;
         
-        for (int i = 0; i < H; i++)
+        triCollection[3][0].x = 0.5f;   triCollection[3][0].y = -0.5f;  triCollection[3][0].z = -0.5f;
+        triCollection[3][1].x = 0.5f;   triCollection[3][1].y = 0.5f;   triCollection[3][1].z = 0.5f;
+        triCollection[3][2].x = 0.5f;   triCollection[3][2].y = -0.5f;  triCollection[3][2].z = 0.5f;
+
+        // NORTH
+        triCollection[4][0].x = 0.5f;   triCollection[4][0].y = -0.5f;  triCollection[4][0].z = 0.5f;
+        triCollection[4][1].x = 0.5f;   triCollection[4][1].y = 0.5f;   triCollection[4][1].z = 0.5f;
+        triCollection[4][2].x = -0.5f;  triCollection[4][2].y = 0.5f;   triCollection[4][2].z = 0.5f;
+
+        triCollection[5][0].x = 0.5f;   triCollection[5][0].y = -0.5f;  triCollection[5][0].z = 0.5f;
+        triCollection[5][1].x = -0.5f;  triCollection[5][1].y = 0.5f;   triCollection[5][1].z = 0.5f;
+        triCollection[5][2].x = -0.5f;  triCollection[5][2].y = 0.5f;   triCollection[5][2].z = 0.5f;
+
+        // WEST   
+        triCollection[6][0].x = -0.5f;  triCollection[6][0].y = -0.5f;  triCollection[6][0].z = 0.5f;
+        triCollection[6][1].x = -0.5f;  triCollection[6][1].y = 0.5f;   triCollection[6][1].z = 0.5f;
+        triCollection[6][2].x = 0.5f;   triCollection[6][2].y = 0.5f;   triCollection[6][2].z = -0.5f;
+
+        triCollection[7][0].x = -0.5f;  triCollection[7][0].y = -0.5f;  triCollection[7][0].z = 0.5f;
+        triCollection[7][1].x = -0.5f;  triCollection[7][1].y = 0.5f;   triCollection[7][1].z = -0.5f;
+        triCollection[7][2].x = -0.5f;  triCollection[7][2].y = -0.5f;  triCollection[7][2].z = -0.5f;
+
+        // TOP
+        triCollection[8][0].x = -0.5f;  triCollection[8][0].y = 0.5f;   triCollection[8][0].z = -0.5f;
+        triCollection[8][1].x = -0.5f;  triCollection[8][1].y = 0.5f;   triCollection[8][1].z = 0.5f;
+        triCollection[8][2].x = 0.5f;   triCollection[8][2].y = 0.5f;   triCollection[8][2].z = 0.5f;
+        
+        triCollection[9][0].x = -0.5f;  triCollection[9][0].y = 0.5f;   triCollection[9][0].z = -0.5f;
+        triCollection[9][1].x = 0.5f;   triCollection[9][1].y = 0.5f;   triCollection[9][1].z = 0.5f;
+        triCollection[9][2].x = 0.5f;   triCollection[9][2].y = 0.5f;   triCollection[9][2].z = -0.5f;
+        
+        // BOTTOM
+        triCollection[10][0].x = 0.5f;  triCollection[10][0].y = -0.5f; triCollection[10][0].z = 0.5f;
+        triCollection[10][1].x = -0.5f; triCollection[10][1].y = -0.5f; triCollection[10][1].z = 0.5f;
+        triCollection[10][2].x = -0.5f; triCollection[10][2].y = -0.5f; triCollection[10][2].z = -0.5f;
+
+        triCollection[11][0].x = 0.5f;  triCollection[11][0].y = -0.5f; triCollection[11][0].z = 0.5f;
+        triCollection[11][1].x = -0.5f; triCollection[11][1].y = -0.5f; triCollection[11][1].z = -0.5f;
+        triCollection[11][2].x = 0.5f;  triCollection[11][2].y = -0.5f; triCollection[11][2].z = -0.5f;
+        
+        float t = n * 0.15f;
+        for (unsigned char tri = 0; tri < 12; tri++)
         {
-            for (int j = 0; j < W; j++)
-            {
-                unsigned short projected_char_index = 0;
 
-                if (
-                    (i == (int)v1Proj.y && j == (int)v1Proj.x) ||
-                    (i == (int)v2Proj.y && j == (int)v2Proj.x) ||
-                    (i == (int)v3Proj.y && j == (int)v3Proj.x) ||
-                    (i == (int)v4Proj.y && j == (int)v4Proj.x) ||
-                    (i == (int)v5Proj.y && j == (int)v5Proj.x) ||
-                    (i == (int)v6Proj.y && j == (int)v6Proj.x) ||
-                    (i == (int)v7Proj.y && j == (int)v7Proj.x) ||
-                    (i == (int)v8Proj.y && j == (int)v8Proj.x)
-                ) {projected_char_index = 5;}
-                    // screen[i * W + j] = '#';}
-                
+            // SPIN
+            triCollection[tri][0] = rotateX(triCollection[tri][0], t);
+            triCollection[tri][1] = rotateX(triCollection[tri][1], t);
+            triCollection[tri][2] = rotateX(triCollection[tri][2], t);
 
-            //     if (
-            //         (i == (int)v1Proj.y) ||
-            //         (i == (int)v2Proj.y) ||
-            //         (i == (int)v3Proj.y) ||
-            //         (i == (int)v4Proj.y) ||
-            //         (i == (int)v5Proj.y) ||
-            //         (i == (int)v6Proj.y) ||
-            //         (i == (int)v7Proj.y) ||
-            //         (i == (int)v8Proj.y)
-            //     ) {
-            //         isDrawing = 1;
-            //         if (
-            //         (i == (int)v1Proj.y && j == (int)v1Proj.x) ||
-            //         (i == (int)v2Proj.y && j == (int)v2Proj.x) ||
-            //         (i == (int)v3Proj.y && j == (int)v3Proj.x) ||
-            //         (i == (int)v4Proj.y && j == (int)v4Proj.x) ||
-            //         (i == (int)v5Proj.y && j == (int)v5Proj.x) ||
-            //         (i == (int)v6Proj.y && j == (int)v6Proj.x) ||
-            //         (i == (int)v7Proj.y && j == (int)v7Proj.x) ||
-            //         (i == (int)v8Proj.y && j == (int)v8Proj.x)
-            //         ) {
-            //             putchar('#');
-            //         }
+            triCollection[tri][0] = rotateY(triCollection[tri][0], t / 2.5f);
+            triCollection[tri][1] = rotateY(triCollection[tri][1], t / 2.5f);
+            triCollection[tri][2] = rotateY(triCollection[tri][2], t / 2.5f);
 
-            //         else {putchar(' ');}
+            triCollection[tri][0] = rotateZ(triCollection[tri][0], t / 2.f);
+            triCollection[tri][1] = rotateZ(triCollection[tri][1], t / 2.f);
+            triCollection[tri][2] = rotateZ(triCollection[tri][2], t / 2.f);
 
-            //         if (j == W - 1) {putchar('\n');}
-            //     }
-            //     else {isDrawing = 0;}//putchar('\n');}
+            // TRANSLATE Z
+            triCollection[tri][0].z += DISTANCE_FROM_CAMERA;
+            triCollection[tri][1].z += DISTANCE_FROM_CAMERA;
+            triCollection[tri][2].z += DISTANCE_FROM_CAMERA;
 
-            //     // else if (j != W-1) {screen[i * W + j] = ' ';}
-            //     // else {screen[i * W + j] = '\n';}
-                putchar(PROJECTED_CHAR[projected_char_index]);
-            // }
-            // if (!isDrawing) {putchar('\n');}
-                // putchar(' '); putchar(' '); putchar(' ');
-                // putchar('\n');}
-            // putchar('\n');
+            // PROJECT
+            triCollection[tri][0] = vec3_x_mat44(triCollection[tri][0], PROJECTION_MATRIX);
+            triCollection[tri][1] = vec3_x_mat44(triCollection[tri][1], PROJECTION_MATRIX);
+            triCollection[tri][2] = vec3_x_mat44(triCollection[tri][2], PROJECTION_MATRIX);
+
+            // CENTER
+            triCollection[tri][0].x += INIT_TRANSLATION; 
+            triCollection[tri][0].y += INIT_TRANSLATION;
+            triCollection[tri][1].x += INIT_TRANSLATION; 
+            triCollection[tri][1].y += INIT_TRANSLATION;
+            triCollection[tri][2].x += INIT_TRANSLATION; 
+            triCollection[tri][2].y += INIT_TRANSLATION;
+
+            triCollection[tri][0].x *= 0.5f * W; 
+            triCollection[tri][0].y *= 0.5f * H;     
+            triCollection[tri][1].x *= 0.5f * W; 
+            triCollection[tri][1].y *= 0.5f * H; 
+            triCollection[tri][2].x *= 0.5f * W; 
+            triCollection[tri][2].y *= 0.5f * H;  
+        }
+
+        unsigned short hit = 0;
+        unsigned short hit_keys[H][W];
+        unsigned short brightness_keys[H][W];
+
+        // Initialize keys
+        for (int i=0; i<H; i++) {for (int j=0; j<W; j++) {hit_keys[i][j] = 0; brightness_keys[i][j] = 0;}}
+
+        for (int i = 0; i < H; i++) {
+            for (int j = 0; j < W; j++) {
+
+                for (int tri = 0; tri < 12; tri++) {
+
+                    // TODO: If dot product of cross product and camera < 0 -> continue
+
+                    for (int side = 0; side < 3; side++) {
+
+                        float m = (float)(triCollection[tri][(side + 1) % 3].y - triCollection[tri][side].y) / 
+                                    (float)(triCollection[tri][(side + 1) % 3].x - triCollection[tri][side].x);
+
+                        if (fabs(m) <= 1) {
+                            int y = roundf(f(j, triCollection[tri][side], triCollection[tri][(side + 1) % 3]));
+                            int x_max = (int)max(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
+                            int x_min = (int)min(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
+
+                            if (i == y && j >= x_min && j <= x_max) {hit = 1; hit_keys[i][j] = 1;} else {hit = 0;}
+                        }
+
+                        else {
+                            int x = roundf(g(i, triCollection[tri][side], triCollection[tri][(side + 1) % 3]));
+                            int y_max = (int)max(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
+                            int y_min = (int)min(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
+
+                            if (j == x && i >= y_min && i <= y_max) {hit = 1; hit_keys[i][j] = 1;} else {hit = 0;}
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int i=0; i<H; i++) {
+            for (int j=0; j<W; j++) {
+
+                // TODO: Fix fill
+
+                // Fill (Check if borders at least 2 hits)
+                // if (i != 0 && i != H - 1 && j != 0 && j != W - 1) {
+                //     if (hit_keys[i+1][j] + hit_keys[i-1][j] + hit_keys[i][j+1] + hit_keys[i][j-1] >= 2 && !hit_keys[i][j]) {
+                //         hit_keys[i][j] = 1;
+                //     }
+                // }
+
+                if (hit_keys[i][j]) {putchar('+');} else {putchar(' ');}
             }
             putchar('\n');
         }
         printf("\x1b[H");
     }
-
-
 
     return 0;
 }

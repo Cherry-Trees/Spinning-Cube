@@ -31,18 +31,23 @@ int main() {
 
     char screen[H * W];
     struct Vec3 camera = {0.f, 0.f, 0.f};
-    struct Vec3 light = {0.f, 0.f, -1.f};
-    const char GRADIENT[6] = {' ', '.', '~', '+', '$', '#'};
+    struct Vec3 light = {0.f, -4.f, -1.f};
+    const char GRADIENT[4] = {'.', '~', '+', '#'};
     const int N_GRADIENT_VALUES = sizeof(GRADIENT) / sizeof(char);
-    
+
+    struct Vec3 l1, l2;
+    struct Vec3 surfaceNormals[N_TRIS], lsToCamera[N_TRIS];
+    float values[N_TRIS];
+    int brightnessIndices[N_TRIS];
+
     printf("\x1b[H");
     printf("\x1b[2J");
-    
-    for (int n = 0; n < 200; n++)
+    for (int n = 0; n < FRAMES; n++)
     {
 
-        // 12 triangles, 3 vectors each
-        struct Vec3 triCollection[12][3];
+        // Triangle primitive collection
+        // Example cube: 12 triangles, 3 vectors each
+        struct Vec3 triCollection[N_TRIS][3];
 
         // SOUTH
         triCollection[0][0].x = -0.5f;  triCollection[0][0].y = -0.5f;  triCollection[0][0].z = -0.5f;
@@ -98,11 +103,11 @@ int main() {
         triCollection[11][1].x = -0.5f; triCollection[11][1].y = -0.5f; triCollection[11][1].z = -0.5f;
         triCollection[11][2].x = 0.5f;  triCollection[11][2].y = -0.5f; triCollection[11][2].z = -0.5f;
         
-        float t = n * 0.1f;
-        for (unsigned char tri = 0; tri < 12; tri++)
+        const float t = n * 0.1f;
+        for (int tri = 0; tri < N_TRIS; tri++)
         {
 
-            // SPIN
+            // // SPIN
             triCollection[tri][0] = rotateX(triCollection[tri][0], t);
             triCollection[tri][1] = rotateX(triCollection[tri][1], t);
             triCollection[tri][2] = rotateX(triCollection[tri][2], t);
@@ -120,6 +125,23 @@ int main() {
             triCollection[tri][1].z += DISTANCE_FROM_CAMERA;
             triCollection[tri][2].z += DISTANCE_FROM_CAMERA;
 
+            // RENDER
+            l1.x = triCollection[tri][1].x - triCollection[tri][0].x;
+            l1.y = triCollection[tri][1].y - triCollection[tri][0].y;
+            l1.z = triCollection[tri][1].z - triCollection[tri][0].z;
+
+            l2.x = triCollection[tri][2].x - triCollection[tri][1].x;
+            l2.y = triCollection[tri][2].y - triCollection[tri][1].y;
+            l2.z = triCollection[tri][2].z - triCollection[tri][1].z;
+
+            surfaceNormals[tri] = unit(cross(l1, l2));
+            lsToCamera[tri].x = triCollection[tri][0].x - camera.x;
+            lsToCamera[tri].y = triCollection[tri][0].y - camera.y;
+            lsToCamera[tri].z = triCollection[tri][0].z - camera.z;
+
+            values[tri] = dot(surfaceNormals[tri], light);
+            brightnessIndices[tri] = max(min(roundf(values[tri] * N_GRADIENT_VALUES * VALUE_INTENSITY), N_GRADIENT_VALUES - 1), 0);
+
             // PROJECT
             triCollection[tri][0] = vec3_x_mat44(triCollection[tri][0], PROJECTION_MATRIX);
             triCollection[tri][1] = vec3_x_mat44(triCollection[tri][1], PROJECTION_MATRIX);
@@ -133,14 +155,16 @@ int main() {
             triCollection[tri][2].x += INIT_TRANSLATION; 
             triCollection[tri][2].y += INIT_TRANSLATION;
 
-            triCollection[tri][0].x += sinf(t / 1.f) / 2.f;
-            triCollection[tri][1].x += sinf(t / 1.f) / 2.f;
-            triCollection[tri][2].x += sinf(t / 1.f) / 2.f;
+            // REVOLVE
+            triCollection[tri][0].x += sinf(t / 1.f) / 4.f;
+            triCollection[tri][1].x += sinf(t / 1.f) / 4.f;
+            triCollection[tri][2].x += sinf(t / 1.f) / 4.f;
 
-            triCollection[tri][0].y += cosf(t / 1.f) / 2.f;
-            triCollection[tri][1].y += cosf(t / 1.f) / 2.f;
-            triCollection[tri][2].y += cosf(t / 1.f) / 2.f;
+            triCollection[tri][0].y += cosf(t / 1.f) / 4.f;
+            triCollection[tri][1].y += cosf(t / 1.f) / 4.f;
+            triCollection[tri][2].y += cosf(t / 1.f) / 4.f;
 
+            // SCALE
             triCollection[tri][0].x *= 0.5f * W; 
             triCollection[tri][0].y *= 0.5f * H;     
             triCollection[tri][1].x *= 0.5f * W; 
@@ -158,92 +182,71 @@ int main() {
                 hit_keys[i][j] = 0; 
                 brightness_keys[i][j] = 0;
 
-                for (int tri = 0; tri < 12; tri++) {
+                for (int tri = 0; tri < N_TRIS; tri++) {
 
-                    // TODO: Calculating brightness needs to come before projection
-
-                    const struct Vec3 l1 = {
-                        triCollection[tri][1].x - triCollection[tri][0].x,
-                        triCollection[tri][1].y - triCollection[tri][0].y,
-                        triCollection[tri][1].z - triCollection[tri][0].z,
-                    };
-                    const struct Vec3 l2 = {
-                        triCollection[tri][2].x - triCollection[tri][1].x,
-                        triCollection[tri][2].y - triCollection[tri][1].y,
-                        triCollection[tri][2].z - triCollection[tri][1].z,
-                    };
-                    const struct Vec3 surfaceNormal = unit(cross(l1, l2));
-                    const struct Vec3 lToCamera = {
-                        triCollection[tri][0].x - camera.x,
-                        triCollection[tri][0].y - camera.y,
-                        triCollection[tri][0].z - camera.z,
-                    };
-
-                    if (dot(surfaceNormal, lToCamera) < 0.f && 
+                    if (dot(surfaceNormals[tri], lsToCamera[tri]) < 0.f && 
                         triCollection[tri][0].z > 0.f &&
                         triCollection[tri][1].z > 0.f && 
                         triCollection[tri][2].z > 0.f) {
-                        
-                        // These need to come before projection
-                        const float intensity = dot(surfaceNormal, light);
-                        const int brightnessIndex = max(min(roundf(intensity * N_GRADIENT_VALUES), N_GRADIENT_VALUES - 1), 0);
 
-                        for (int side = 0; side < 3; side++) {
+                            unsigned int ssum = 0;
+                            for (unsigned char side = 0; side < 3; side++) {
+                                
+                                // TODO: Pass this as parameter to f and g
+                                short s;
+                                const float slope = (float)(triCollection[tri][(side + 1) % 3].y - triCollection[tri][side].y) / 
+                                                (float)(triCollection[tri][(side + 1) % 3].x - triCollection[tri][side].x);
 
-                            const float m = (float)(triCollection[tri][(side + 1) % 3].y - triCollection[tri][side].y) / 
-                                        (float)(triCollection[tri][(side + 1) % 3].x - triCollection[tri][side].x);
+                                // y(j)
+                                if (fabs(slope) <= 1) {
+                                    s = (triCollection[tri][(side + 1) % 3].x < triCollection[tri][side].x) ? -1 : 1;
+                                    const int y = (int)(f(j, triCollection[tri][(side + 1) % 3], triCollection[tri][side]));
 
-                            if (fabs(m) <= 1) {
-                                const int y = roundf(f(j, triCollection[tri][side], triCollection[tri][(side + 1) % 3]));
-                                const int x_max = (int)max(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
-                                const int x_min = (int)min(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
+                                    const int x_min = (int)min(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
+                                    const int x_max = (int)max(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
 
-                                if (i == y && j >= x_min && j <= x_max) {
-                                    hit = 1; 
-                                    hit_keys[i][j] = 1;
-                                    brightness_keys[i][j] = brightnessIndex;
-                                } else {hit = 0;}
+                                    // Fill
+                                    if (s * i < s * y) {ssum++;}
+
+                                    // Draw wireframe
+                                    if (i == y && j >= x_min && j <= x_max) {
+                                        hit_keys[i][j] = 1;
+                                        brightness_keys[i][j] = brightnessIndices[tri];
+                                    }
+                                }
+
+                                // x(i)
+                                else {
+                                    s = (triCollection[tri][(side + 1) % 3].y < triCollection[tri][side].y) ? -1 : 1;
+                                    const int x = (int)(g(i, triCollection[tri][(side + 1) % 3], triCollection[tri][side]));
+
+                                    const int y_min = (int)min(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
+                                    const int y_max = (int)max(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
+
+                                    // Fill
+                                    if (s * j > s * x) {ssum++;}
+
+                                    // Draw wireframe
+                                    if (j == x && i >= y_min && i <= y_max) {
+                                        hit_keys[i][j] = 1;
+                                        brightness_keys[i][j] = brightnessIndices[tri];
+                                    }
+                                }
                             }
 
-                            else {
-                                const int x = roundf(g(i, triCollection[tri][side], triCollection[tri][(side + 1) % 3]));
-                                const int y_max = (int)max(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
-                                const int y_min = (int)min(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
-
-                                if (j == x && i >= y_min && i <= y_max) {
-                                    hit = 1; 
-                                    hit_keys[i][j] = 1;
-                                    brightness_keys[i][j] = brightnessIndex;
-                                } else {hit = 0;}
+                            if (ssum == 3) {
+                                hit_keys[i][j] = 1;
+                                brightness_keys[i][j] = brightnessIndices[tri];
                             }
-                        }
                     }
                 }
-            }
-        }
-
-        for (int i=0; i<H; i++) {
-            for (int j=0; j<W; j++) {
-
-                // Fix fill
-
-                // Fill (Check if borders at least 2 hits)
-                // if (i != 0 && i != H - 1 && j != 0 && j != W - 1) {
-                //     if (hit_keys[i+1][j] + hit_keys[i-1][j] + hit_keys[i][j+1] + hit_keys[i][j-1] >= 2 && !hit_keys[i][j]) {
-                //         hit_keys[i][j] = 1;
-                //     }
-                // }
-
-                if (hit_keys[i][j]) {
-                    //putchar(GRADIENT[brightness_keys[i][j]]);
-                    putchar('+');
-                } else {putchar(' ');}
+                if (hit_keys[i][j]) {putchar(GRADIENT[brightness_keys[i][j]]);} 
+                else {putchar(' ');}
             }
             putchar('\n');
         }
         printf("\x1b[H");
-     
     }
-
+    
     return 0;
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include <math.h>
-#include "Mat44.h"
 
 #define W 40
 #define H 20
@@ -15,3 +14,5 @@
 #define DISTANCE_FROM_CAMERA 1.5f
 #define INIT_TRANSLATION 1.f
 #define N_TRIS 12
+#define VALUE_INTENSITY 0.7f
+#define FRAMES 270

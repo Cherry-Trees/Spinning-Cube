@@ -107,7 +107,7 @@ int main() {
         for (int tri = 0; tri < N_TRIS; tri++)
         {
 
-            // // SPIN
+            // SPIN
             triCollection[tri][0] = rotateX(triCollection[tri][0], t);
             triCollection[tri][1] = rotateX(triCollection[tri][1], t);
             triCollection[tri][2] = rotateX(triCollection[tri][2], t);

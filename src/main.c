@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "globals.h"
 #include "functions.h"
@@ -9,7 +10,7 @@ int main() {
 
     struct Mat44 PROJECTION_MATRIX;
     
-    PROJECTION_MATRIX.m[0][0] = ASPECT_RATIO * FOCAL_LENGTH * X_SCALE;    
+    PROJECTION_MATRIX.m[0][0] = ((FOCAL_LENGTH) * X_SCALE) / (ASPECT_RATIO);    
     PROJECTION_MATRIX.m[0][1] = 0.f;            
     PROJECTION_MATRIX.m[0][2] = 0.f;            
     PROJECTION_MATRIX.m[0][3] = 0.f;    
@@ -27,23 +28,26 @@ int main() {
     PROJECTION_MATRIX.m[3][0] = 0.f;    
     PROJECTION_MATRIX.m[3][1] = 0.f;            
     PROJECTION_MATRIX.m[3][2] = (-Z_FAR * Z_NEAR) / (Z_FAR - Z_NEAR);            
-    PROJECTION_MATRIX.m[3][3] = 0.f;  
+    PROJECTION_MATRIX.m[3][3] = 0.f;          
 
+    
     char screen[H * W];
     struct Vec3 camera = {0.f, 0.f, 0.f};
     struct Vec3 light = {0.f, -4.f, -1.f};
-    const char GRADIENT[4] = {'.', '~', '+', '#'};
+    const char GRADIENT[91] = "`.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@";
     const int N_GRADIENT_VALUES = sizeof(GRADIENT) / sizeof(char);
 
     struct Vec3 l1, l2;
     struct Vec3 surfaceNormals[N_TRIS], lsToCamera[N_TRIS];
     float values[N_TRIS];
-    int brightnessIndices[N_TRIS];
+    int value_indices[N_TRIS];
 
+    
     printf("\x1b[H");
     printf("\x1b[2J");
     for (int n = 0; n < FRAMES; n++)
     {
+        const float t = n * 0.1f;
 
         // Triangle primitive collection
         // Example cube: 12 triangles, 3 vectors each
@@ -103,27 +107,30 @@ int main() {
         triCollection[11][1].x = -0.5f; triCollection[11][1].y = -0.5f; triCollection[11][1].z = -0.5f;
         triCollection[11][2].x = 0.5f;  triCollection[11][2].y = -0.5f; triCollection[11][2].z = -0.5f;
         
-        const float t = n * 0.1f;
+        
         for (int tri = 0; tri < N_TRIS; tri++)
         {
+            // // SPIN
+            triCollection[tri][0] = rotateX(triCollection[tri][0], t / 3.1f);
+            triCollection[tri][1] = rotateX(triCollection[tri][1], t / 3.1f);
+            triCollection[tri][2] = rotateX(triCollection[tri][2], t / 3.1f);
 
-            // SPIN
-            triCollection[tri][0] = rotateX(triCollection[tri][0], t);
-            triCollection[tri][1] = rotateX(triCollection[tri][1], t);
-            triCollection[tri][2] = rotateX(triCollection[tri][2], t);
+            triCollection[tri][0] = rotateY(triCollection[tri][0], t / 1.f);
+            triCollection[tri][1] = rotateY(triCollection[tri][1], t / 1.f);
+            triCollection[tri][2] = rotateY(triCollection[tri][2], t / 1.f);
 
-            triCollection[tri][0] = rotateY(triCollection[tri][0], t / 2.5f);
-            triCollection[tri][1] = rotateY(triCollection[tri][1], t / 2.5f);
-            triCollection[tri][2] = rotateY(triCollection[tri][2], t / 2.5f);
-
-            triCollection[tri][0] = rotateZ(triCollection[tri][0], t / 2.f);
-            triCollection[tri][1] = rotateZ(triCollection[tri][1], t / 2.f);
-            triCollection[tri][2] = rotateZ(triCollection[tri][2], t / 2.f);
+            triCollection[tri][0] = rotateZ(triCollection[tri][0], t / 2.2f);
+            triCollection[tri][1] = rotateZ(triCollection[tri][1], t / 2.2f);
+            triCollection[tri][2] = rotateZ(triCollection[tri][2], t / 2.2f);
 
             // TRANSLATE Z
             triCollection[tri][0].z += DISTANCE_FROM_CAMERA;
             triCollection[tri][1].z += DISTANCE_FROM_CAMERA;
             triCollection[tri][2].z += DISTANCE_FROM_CAMERA;
+
+            triCollection[tri][0].z += cosf(t / 3.3f) / 2.5f;
+            triCollection[tri][1].z += cosf(t / 3.3f) / 2.5f;
+            triCollection[tri][2].z += cosf(t / 3.3f) / 2.5f;
 
             // RENDER
             l1.x = triCollection[tri][1].x - triCollection[tri][0].x;
@@ -140,7 +147,7 @@ int main() {
             lsToCamera[tri].z = triCollection[tri][0].z - camera.z;
 
             values[tri] = dot(surfaceNormals[tri], light);
-            brightnessIndices[tri] = max(min(roundf(values[tri] * N_GRADIENT_VALUES * VALUE_INTENSITY), N_GRADIENT_VALUES - 1), 0);
+            value_indices[tri] = max(min(roundf(values[tri] * N_GRADIENT_VALUES * VALUE_INTENSITY), N_GRADIENT_VALUES - 1), 0);
 
             // PROJECT
             triCollection[tri][0] = vec3_x_mat44(triCollection[tri][0], PROJECTION_MATRIX);
@@ -156,13 +163,9 @@ int main() {
             triCollection[tri][2].y += INIT_TRANSLATION;
 
             // REVOLVE
-            triCollection[tri][0].x += sinf(t / 1.f) / 4.f;
-            triCollection[tri][1].x += sinf(t / 1.f) / 4.f;
-            triCollection[tri][2].x += sinf(t / 1.f) / 4.f;
-
-            triCollection[tri][0].y += cosf(t / 1.f) / 4.f;
-            triCollection[tri][1].y += cosf(t / 1.f) / 4.f;
-            triCollection[tri][2].y += cosf(t / 1.f) / 4.f;
+            triCollection[tri][0].x += sinf(t / 3.3f) / 2.5f;
+            triCollection[tri][1].x += sinf(t / 3.3f) / 2.5f;
+            triCollection[tri][2].x += sinf(t / 3.3f) / 2.5f;
 
             // SCALE
             triCollection[tri][0].x *= 0.5f * W; 
@@ -173,14 +176,11 @@ int main() {
             triCollection[tri][2].y *= 0.5f * H;  
         }
 
-        unsigned short hit = 0;
-        unsigned short hit_keys[H][W];
-        unsigned short brightness_keys[H][W];
-
         for (int i = 0; i < H; i++) {
             for (int j = 0; j < W; j++) {
-                hit_keys[i][j] = 0; 
-                brightness_keys[i][j] = 0;
+
+                unsigned char hit = 0;
+                int value_key = 0;
 
                 for (int tri = 0; tri < N_TRIS; tri++) {
 
@@ -189,58 +189,58 @@ int main() {
                         triCollection[tri][1].z > 0.f && 
                         triCollection[tri][2].z > 0.f) {
 
-                            unsigned int ssum = 0;
+                            unsigned char switch_gate = 0;
                             for (unsigned char side = 0; side < 3; side++) {
                                 
-                                // TODO: Pass this as parameter to f and g
-                                short s;
+                                signed char flip;
                                 const float slope = (float)(triCollection[tri][(side + 1) % 3].y - triCollection[tri][side].y) / 
                                                 (float)(triCollection[tri][(side + 1) % 3].x - triCollection[tri][side].x);
 
                                 // y(j)
                                 if (fabs(slope) <= 1) {
-                                    s = (triCollection[tri][(side + 1) % 3].x < triCollection[tri][side].x) ? -1 : 1;
-                                    const int y = (int)(f(j, triCollection[tri][(side + 1) % 3], triCollection[tri][side]));
+                                    flip = (triCollection[tri][(side + 1) % 3].x < triCollection[tri][side].x) ? -1 : 1;
+                                    const int y = (int)(slope * (j - triCollection[tri][side].x) + triCollection[tri][side].y);
 
                                     const int x_min = (int)min(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
                                     const int x_max = (int)max(triCollection[tri][side].x, triCollection[tri][(side + 1) % 3].x);
 
                                     // Fill
-                                    if (s * i < s * y) {ssum++;}
+                                    if (flip * i < flip * y) {switch_gate++;}
 
                                     // Draw wireframe
                                     if (i == y && j >= x_min && j <= x_max) {
-                                        hit_keys[i][j] = 1;
-                                        brightness_keys[i][j] = brightnessIndices[tri];
+                                        hit = 1;
+                                        value_key = value_indices[tri];
                                     }
                                 }
 
                                 // x(i)
                                 else {
-                                    s = (triCollection[tri][(side + 1) % 3].y < triCollection[tri][side].y) ? -1 : 1;
-                                    const int x = (int)(g(i, triCollection[tri][(side + 1) % 3], triCollection[tri][side]));
+                                    flip = (triCollection[tri][(side + 1) % 3].y < triCollection[tri][side].y) ? -1 : 1;
+                                    const int x = (int)((i - triCollection[tri][side].y) / slope + triCollection[tri][side].x);
 
                                     const int y_min = (int)min(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
                                     const int y_max = (int)max(triCollection[tri][side].y, triCollection[tri][(side + 1) % 3].y);
 
                                     // Fill
-                                    if (s * j > s * x) {ssum++;}
+                                    if (flip * j > flip * x) {switch_gate++;}
 
                                     // Draw wireframe
                                     if (j == x && i >= y_min && i <= y_max) {
-                                        hit_keys[i][j] = 1;
-                                        brightness_keys[i][j] = brightnessIndices[tri];
+                                        hit = 1;
+                                        value_key = value_indices[tri];
                                     }
                                 }
                             }
 
-                            if (ssum == 3) {
-                                hit_keys[i][j] = 1;
-                                brightness_keys[i][j] = brightnessIndices[tri];
+                            if (switch_gate == 3) {
+                                hit = 1;
+                                value_key = value_indices[tri];
                             }
-                    }
+                        }       
                 }
-                if (hit_keys[i][j]) {putchar(GRADIENT[brightness_keys[i][j]]);} 
+
+                if (hit) {putchar(GRADIENT[value_key]);} 
                 else {putchar(' ');}
             }
             putchar('\n');
